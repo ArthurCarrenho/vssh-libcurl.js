@@ -19,11 +19,17 @@ void session_perform(struct SessionInfo *session) {
   session->request_active = 0;
   mc = curl_multi_perform(session->multi_handle, &session->request_active);
 
+  //vssh fork: drain the whole info-read queue each tick instead of reading a single
+  //message. curl_multi_info_read returns one message per call and must be looped until
+  //NULL — if two requests finish in the same tick, the original code only fired
+  //finish_request() for the first, leaving the second pending until the next setInterval
+  //tick.
   int msgq = 0;
   struct CURLMsg *curl_msg;
-  curl_msg = curl_multi_info_read(session->multi_handle, &msgq);
-  if (curl_msg && curl_msg->msg == CURLMSG_DONE) {
-    finish_request(curl_msg);
+  while ((curl_msg = curl_multi_info_read(session->multi_handle, &msgq))) {
+    if (curl_msg->msg == CURLMSG_DONE) {
+      finish_request(curl_msg);
+    }
   }
 }
 

@@ -68,6 +68,13 @@ void http_set_options(CURL* http_handle, const char* json_params, const char* bo
         curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 0);
       }
     }
+
+    //vssh fork: allow skipping TLS peer/host verification (self-signed certs on
+    //internal/dev servers). Opt-in per session via the "insecure" option on HTTPSession.
+    if (strcmp(key, "insecure") == 0 && cJSON_IsTrue(item)) {
+      curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYPEER, 0L);
+      curl_easy_setopt(http_handle, CURLOPT_SSL_VERIFYHOST, 0L);
+    }
   }
   cJSON_Delete(request_json);
 

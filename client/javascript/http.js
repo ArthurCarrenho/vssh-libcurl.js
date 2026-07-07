@@ -122,6 +122,11 @@ class HTTPSession extends CurlSession {
     if (this.options && this.options.proxy) {
       params.proxy = this.options.proxy;
     }
+    //vssh fork: propagate the session-level "insecure" flag to every request so
+    //http_set_options (C side) can disable TLS peer/host verification.
+    if (this.options && this.options.insecure) {
+      params.insecure = this.options.insecure;
+    }
     check_proxy(params.proxy);
 
     let body = await this.constructor.create_options(params);
