@@ -14,7 +14,12 @@ void http_set_options(CURL* http_handle, const char* json_params, const char* bo
   //some default options
   curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1);
   curl_easy_setopt(http_handle, CURLOPT_ACCEPT_ENCODING, "");
-  curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2_0);
+  //vssh fork: CURL_HTTP_VERSION_2TLS (h2 for HTTPS, HTTP/1.1 for cleartext) instead of
+  //CURL_HTTP_VERSION_2_0. Forcing 2_0 on http:// makes curl attempt an h2c upgrade
+  //(Upgrade: h2c header). Node http servers (e.g. Vite/Astro dev) route any request with an
+  //Upgrade header to the 'upgrade' event (meant for WebSockets) instead of 'request', and hang
+  //forever when the handler doesn't speak h2c — the exact symptom we saw against a dev server.
+  curl_easy_setopt(http_handle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS);
   curl_easy_setopt(http_handle, CURLOPT_IGNORE_ONION, 1L);
 
   //parse json options
