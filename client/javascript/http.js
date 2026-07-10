@@ -66,7 +66,13 @@ class HTTPSession extends CurlSession {
           return;
         }
         if (error > 0) {
-          error_msg(`Request "${url}" failed with error code ${error}: ${get_error_str(error)}`);
+          // vssh fork: NÃO loga no console.error — a falha já é propagada via reject() logo abaixo
+          // e tratada pelo chamador (transporte → handleFetch do scramjet), exatamente como o
+          // fetch() de um navegador de verdade (a promise rejeita, sem log de framework). Uma URL
+          // morta/host bloqueado é normal e não deve poluir o console. Ligue globalThis.
+          // __VSSH_WISP_VERBOSE para ver a falha crua do libcurl aqui ao depurar.
+          if (globalThis.__VSSH_WISP_VERBOSE)
+            error_msg(`Request "${url}" failed with error code ${error}: ${get_error_str(error)}`);
           reject(new TypeError(`Request failed with error code ${error}: ${get_error_str(error)}`));
         }
         else if (error === -1) {
